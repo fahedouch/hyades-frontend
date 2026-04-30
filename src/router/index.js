@@ -26,6 +26,8 @@ const VulnerabilityAudit = () =>
   import('@/views/globalAudit/VulnerabilityAudit');
 const LicenseList = () => import('@/views/portfolio/licenses/LicenseList');
 const PolicyManagement = () => import('@/views/policy/PolicyManagement');
+const VulnerabilityPolicyEditor = () =>
+  import('@/views/policy/VulnerabilityPolicyEditor');
 const Project = () => import('@/views/portfolio/projects/Project');
 const PolicyViolationAudit = () => import('@/views/audit/PolicyViolationAudit');
 
@@ -322,6 +324,31 @@ function configRoutes() {
             sectionPath: '/licenses',
             sectionName: 'Licenses',
             permissions: ['VIEW_PORTFOLIO'],
+          },
+        },
+        {
+          path: 'policy/vulnerability/new',
+          name: 'VulnerabilityPolicyCreate',
+          component: VulnerabilityPolicyEditor,
+          meta: {
+            title: i18n.t('message.policy_editor_title_create'),
+            i18n: 'message.policy_management',
+            sectionPath: '/policy',
+            sectionName: 'Policy Management',
+            permissions: ['POLICY_MANAGEMENT', 'POLICY_MANAGEMENT_CREATE'],
+          },
+        },
+        {
+          path: 'policy/vulnerability/:uuid',
+          name: 'VulnerabilityPolicyEdit',
+          component: VulnerabilityPolicyEditor,
+          props: (route) => ({ uuid: route.params.uuid }),
+          meta: {
+            title: i18n.t('message.vulnerability_policies'),
+            i18n: 'message.policy_management',
+            sectionPath: '/policy',
+            sectionName: 'Policy Management',
+            permissions: ['POLICY_MANAGEMENT', 'POLICY_MANAGEMENT_READ'],
           },
         },
         {
@@ -808,6 +835,23 @@ function configRoutes() {
             },
             {
               path: 'notifications/publishers',
+              component: Publishers,
+              meta: {
+                title: i18n.t('message.administration'),
+                i18n: 'message.administration',
+                sectionPath: '/admin',
+                sectionName: 'Admin',
+                permissions: [
+                  'SYSTEM_CONFIGURATION',
+                  'SYSTEM_CONFIGURATION_CREATE',
+                  'SYSTEM_CONFIGURATION_READ',
+                  'SYSTEM_CONFIGURATION_UPDATE',
+                  'SYSTEM_CONFIGURATION_DELETE',
+                ],
+              },
+            },
+            {
+              path: 'notifications/publishers/:extensionName',
               component: Publishers,
               meta: {
                 title: i18n.t('message.administration'),

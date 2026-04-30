@@ -1,38 +1,84 @@
 <template>
   <b-card no-body :header="$t('admin.workflow_runs')">
     <b-card-body>
-      <div class="filter-pills">
-        <b-button
-          v-if="hasActiveFilters"
-          size="sm"
-          variant="outline-danger"
-          class="btn-clear-all-filters"
-          @click="clearAllFilters"
-        >
-          {{ $t('message.clear_all') }} <span class="fa fa-remove"></span>
-        </b-button>
-        <text-filter-pill
-          :field-label="$t('admin.workflow_name')"
-          field-name="workflow_name"
-          :operators="['equals']"
-          v-model="workflowNameFilter"
-        />
-        <enum-filter-pill
-          :field-label="$t('message.status')"
-          field-name="status"
-          :options="statusOptions"
-          v-model="statusFilter"
-        />
-        <date-time-range-filter-pill
-          :field-label="$t('message.created')"
-          field-name="created_at"
-          v-model="createdFilter"
-        />
-        <date-time-range-filter-pill
-          :field-label="$t('message.completed')"
-          field-name="completed_at"
-          v-model="completedFilter"
-        />
+      <div
+        id="workflowRunToolbar"
+        class="filter-bar"
+        role="toolbar"
+        :aria-label="$t('message.filters')"
+      >
+        <div class="filter-pills">
+          <text-filter-pill
+            v-if="isFilterVisible('workflowName')"
+            ref="filter_workflowName"
+            :field-label="$t('admin.workflow_name')"
+            field-name="workflow_name"
+            icon="fa-code-fork"
+            :operators="['equals']"
+            v-model="workflowNameFilter"
+            @dismiss="onFilterDismiss('workflowName')"
+          />
+          <enum-filter-pill
+            v-if="isFilterVisible('status')"
+            ref="filter_status"
+            :field-label="$t('message.status')"
+            field-name="status"
+            icon="fa-flag"
+            :options="statusOptions"
+            v-model="statusFilter"
+            @dismiss="onFilterDismiss('status')"
+          />
+          <date-time-range-filter-pill
+            v-if="isFilterVisible('created')"
+            ref="filter_created"
+            :field-label="$t('message.created')"
+            field-name="created_at"
+            icon="fa-calendar"
+            v-model="createdFilter"
+            @dismiss="onFilterDismiss('created')"
+          />
+          <date-time-range-filter-pill
+            v-if="isFilterVisible('completed')"
+            ref="filter_completed"
+            :field-label="$t('message.completed')"
+            field-name="completed_at"
+            icon="fa-calendar-check-o"
+            v-model="completedFilter"
+            @dismiss="onFilterDismiss('completed')"
+          />
+          <b-dropdown
+            v-if="addFilterOptions.length > 0"
+            size="sm"
+            variant="outline-primary"
+            class="btn-more-filters"
+            no-caret
+          >
+            <template #button-content>
+              <span class="fa fa-plus" aria-hidden="true"></span>
+              {{ $t('message.add_filter') }}
+            </template>
+            <b-dropdown-item
+              v-for="filter in addFilterOptions"
+              :key="filter.name"
+              @click="showFilter(filter.name)"
+              ><span
+                :class="['fa', filter.icon, 'mr-2']"
+                aria-hidden="true"
+              ></span
+              >{{ filter.label }}</b-dropdown-item
+            >
+          </b-dropdown>
+          <b-button
+            v-show="activeFilterCount >= 2"
+            size="sm"
+            variant="outline-danger"
+            class="btn-clear-all-filters"
+            @click="clearAllFilters"
+          >
+            <span class="fa fa-remove" aria-hidden="true"></span>
+            {{ $t('message.clear_all') }}
+          </b-button>
+        </div>
       </div>
       <token-paginated-table
         ref="table"
@@ -48,9 +94,11 @@ import DateTimeRangeFilterPill from '@/views/components/DateTimeRangeFilterPill.
 import EnumFilterPill from '@/views/components/EnumFilterPill.vue';
 import TextFilterPill from '@/views/components/TextFilterPill.vue';
 import TokenPaginatedTable from '@/views/components/TokenPaginatedTable.vue';
+import filterPillsMixin from '@/mixins/filterPillsMixin';
 import common from '@/shared/common';
 
 export default {
+  mixins: [filterPillsMixin],
   components: {
     DateTimeRangeFilterPill,
     EnumFilterPill,
@@ -74,6 +122,7 @@ export default {
         { value: 'SUSPENDED', text: this.$t(`message.status_suspended`) },
       ],
       tableOptions: {
+        toolbar: '#workflowRunToolbar',
         sortName: 'id',
         sortOrder: 'desc',
         // Suppress client-side sorting.
@@ -163,16 +212,28 @@ export default {
     };
   },
   computed: {
-    hasActiveFilters() {
-      return (
-        this.workflowNameFilter ||
-        this.statusFilter ||
-        this.createdFilter ||
-        this.completedFilter
-      );
+    allFilterDefs() {
+      return [
+        {
+          name: 'workflowName',
+          label: this.$t('admin.workflow_name'),
+          icon: 'fa-code-fork',
+        },
+        { name: 'status', label: this.$t('message.status'), icon: 'fa-flag' },
+        {
+          name: 'created',
+          label: this.$t('message.created'),
+          icon: 'fa-calendar',
+        },
+        {
+          name: 'completed',
+          label: this.$t('message.completed'),
+          icon: 'fa-calendar-check-o',
+        },
+      ];
     },
     tableDataBaseUrl() {
-      const url = `${this.$api.BASE_URL}/api/v2/workflow-runs`;
+      const url = `${this.$api.BASE_URL}/api/v2/internal/workflow-runs`;
       const queryParams = {};
       if (
         this.workflowNameFilter &&
@@ -211,23 +272,19 @@ export default {
   },
   methods: {
     clearAllFilters() {
-      this.workflowNameFilter = null;
-      this.statusFilter = null;
-      this.createdFilter = null;
-      this.completedFilter = null;
+      this._clearing = true;
+      try {
+        this.workflowNameFilter = null;
+        this.statusFilter = null;
+        this.createdFilter = null;
+        this.completedFilter = null;
+        this.clearPendingFilters();
+      } finally {
+        this._clearing = false;
+      }
     },
   },
 };
 </script>
 
-<style scoped>
-.filter-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.btn-clear-all-filters {
-  border-radius: 20px;
-}
-</style>
+<style scoped src="../../components/filter-pills.css"></style>

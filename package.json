@@ -1,6 +1,6 @@
 {
   "name": "@dependencytrack/frontend",
-  "version": "5.7.0-alpha.2",
+  "version": "5.7.0-alpha.3",
   "description": "Single Page Application for OWASP Dependency-Track",
   "author": "Steve Springett",
   "homepage": "https://dependencytrack.org/",
@@ -21,7 +21,7 @@
     "prettier": "prettier --check --cache '**/*.{js,vue,json,md,yaml}'",
     "prettier-fix": "prettier --write --cache '**/*.{js,vue,json,md,yaml}'",
     "vue-i18n-extract": "vue-i18n-extract report --ci",
-    "add-missing-i18n": "vue-i18n-extract --add"
+    "remove-unused-i18n": "vue-i18n-extract --remove"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.1",
@@ -36,7 +36,7 @@
     "@johmun/vue-tags-input": "2.1.0",
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
-    "axios": "1.8.3",
+    "axios": "1.15.1",
     "bootstrap": "4.6.2",
     "bootstrap-table": "1.22.4",
     "bootstrap-vue": "2.23.1",
@@ -44,7 +44,7 @@
     "codemirror": "6.0.2",
     "core-js": "3.36.1",
     "css-vars-ponyfill": "2.4.9",
-    "dompurify": "2.5.8",
+    "dompurify": "3.4.0",
     "flexver": "1.1.1",
     "font-awesome": "4.7.0",
     "imurmurhash": "0.1.4",
