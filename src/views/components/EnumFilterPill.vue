@@ -1,62 +1,42 @@
 <template>
-  <div class="filter-pill-wrapper">
-    <b-dropdown
-      :id="`enum-filter-pill-${fieldName}`"
-      class="filter-pill"
-      ref="dropdown"
-      size="sm"
-      variant="outline-primary"
-      no-caret
-      boundary="viewport"
-      @hide="onDropdownHide"
-    >
-      <template #button-content>
-        <div class="d-flex align-items-center">
-          <span v-if="!hasFilter">
-            {{ fieldLabel }}
-            <span class="fa fa-filter"></span>
-          </span>
-          <span v-else>
-            {{ fieldLabel }} <em>=</em>&nbsp;<code>{{ displayValue }}</code>
-          </span>
+  <filter-pill-dropdown
+    ref="pill"
+    :field-name="fieldName"
+    :field-label="fieldLabel"
+    :icon="icon"
+    :has-filter="hasFilter"
+    @hide="onDropdownHide"
+    @clear="clearFilter"
+    @dismiss="$emit('dismiss')"
+  >
+    <template #value>= {{ displayValue }}</template>
 
-          <b-button
-            class="btn-filter-pill-clear"
-            v-if="hasFilter"
-            size="sm"
-            :title="$t('message.clear')"
-            @click.stop="clearFilter"
-          >
-            <span class="fa fa-remove"></span>
-          </b-button>
-        </div>
-      </template>
-      <b-dropdown-form class="filter-pill-form pt-2 pb-2" @submit.stop.prevent>
-        <b-form-group class="mb-2">
-          <b-form-select
-            :id="`enum-filter-pill-value-${fieldName}`"
-            v-model="tmpValue"
-            :options="selectOptions"
-            size="sm"
-          ></b-form-select>
-        </b-form-group>
-        <div class="d-flex justify-content-end">
-          <b-button
-            variant="primary"
-            size="sm"
-            @click="applyFilter"
-            :disabled="!tmpValue"
-            >{{ $t('message.apply') }}
-          </b-button>
-        </div>
-      </b-dropdown-form>
-    </b-dropdown>
-  </div>
+    <b-form-group class="mb-2">
+      <b-form-select
+        :id="`enum-filter-pill-value-${fieldName}`"
+        v-model="tmpValue"
+        :options="selectOptions"
+        size="sm"
+      ></b-form-select>
+    </b-form-group>
+    <div class="d-flex justify-content-end">
+      <b-button
+        variant="primary"
+        size="sm"
+        @click="applyFilter"
+        :disabled="!tmpValue"
+        >{{ $t('message.apply') }}
+      </b-button>
+    </div>
+  </filter-pill-dropdown>
 </template>
 
 <script>
+import FilterPillDropdown from '@/views/components/FilterPillDropdown.vue';
+
 export default {
   name: 'EnumFilterPill',
+  components: { FilterPillDropdown },
   props: {
     fieldName: {
       type: String,
@@ -65,6 +45,10 @@ export default {
     fieldLabel: {
       type: String,
       required: true,
+    },
+    icon: {
+      type: String,
+      default: null,
     },
     options: {
       type: Array,
@@ -110,7 +94,11 @@ export default {
     },
     selectOptions() {
       return [
-        { value: null, text: '-- Select --', disabled: true },
+        {
+          value: null,
+          text: `-- ${this.$t('message.select')} --`,
+          disabled: true,
+        },
         ...this.options.map((opt) => {
           if (typeof opt === 'object') {
             return opt;
@@ -121,8 +109,13 @@ export default {
     },
   },
   methods: {
+    open() {
+      this.$refs.pill.open();
+    },
     onDropdownHide() {
-      if (!this.hasFilter) {
+      if (this.hasFilter) {
+        this.tmpValue = this.value;
+      } else {
         this.tmpValue = null;
       }
     },
@@ -132,43 +125,13 @@ export default {
       }
 
       this.$emit('input', this.tmpValue);
-      this.$refs.dropdown.hide();
+      this.$refs.pill.hide();
     },
     clearFilter() {
       this.tmpValue = null;
+      this.$refs.pill.hide();
       this.$emit('input', null);
     },
   },
 };
 </script>
-
-<style scoped>
-.filter-pill-wrapper {
-  display: inline-block;
-}
-
-.filter-pill-wrapper >>> .btn-outline-primary {
-  border-radius: 20px;
-}
-
-.filter-pill-form {
-  min-width: 280px;
-}
-
-.btn-filter-pill-clear {
-  line-height: 1;
-  border: none !important;
-  padding: 2px !important;
-  margin-left: 8px !important;
-  border-radius: 50%;
-}
-
-.btn-filter-pill-clear:hover {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-}
-
-.btn-filter-pill-clear:focus {
-  box-shadow: none !important;
-}
-</style>

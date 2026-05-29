@@ -162,11 +162,36 @@ export default {
           },
         },
         {
-          title: this.$t('message.cvss'),
+          title: this.$t('message.cvss_v2'),
+          field: 'vulnerability.cvssV2BaseScore',
+          sortable: true,
+          visible: false,
+          formatter(value, row, index) {
+            if (Number.isFinite(value)) {
+              return value.toFixed(1);
+            } else {
+              return null;
+            }
+          },
+        },
+        {
+          title: this.$t('message.cvss_v3'),
           field: 'vulnerability.cvssV3BaseScore',
           sortable: true,
           formatter(value, row, index) {
-            if (value && typeof value === 'number') {
+            if (Number.isFinite(value)) {
+              return value.toFixed(1);
+            } else {
+              return null;
+            }
+          },
+        },
+        {
+          title: this.$t('message.cvss_v4'),
+          field: 'vulnerability.cvssV4Score',
+          sortable: true,
+          formatter(value, row, index) {
+            if (Number.isFinite(value)) {
               return value.toFixed(1);
             } else {
               return null;
@@ -200,7 +225,7 @@ export default {
         showRefresh: true,
         pagination: true,
         silentSort: false,
-        sidePagination: 'client',
+        sidePagination: 'server',
         toolbar: '#epssToolbar',
         queryParamsType: 'pageSize',
         pageList: '[10, 25, 50, 100]',
@@ -211,11 +236,11 @@ export default {
         sortName:
           localStorage && localStorage.getItem('ProjectEpssSortName') !== null
             ? localStorage.getItem('ProjectEpssSortName')
-            : undefined,
+            : 'vulnerability.epssScore',
         sortOrder:
           localStorage && localStorage.getItem('ProjectEpssSortOrder') !== null
             ? localStorage.getItem('ProjectEpssSortOrder')
-            : undefined,
+            : 'desc',
         icons: {
           refresh: 'fa-refresh',
         },
@@ -251,9 +276,9 @@ export default {
     apiUrl: function () {
       let url = `${this.$api.BASE_URL}/${this.$api.URL_FINDING}/project/${this.uuid}`;
       if (this.showSuppressedFindings === undefined) {
-        url += '?source=NVD&suppressed=false';
+        url += '?epssFrom=0&suppressed=false';
       } else {
-        url += '?source=NVD&suppressed=' + this.showSuppressedFindings;
+        url += '?epssFrom=0&suppressed=' + this.showSuppressedFindings;
       }
       return url;
     },

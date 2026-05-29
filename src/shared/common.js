@@ -187,6 +187,9 @@ $common.formatAnalyzerLabel = function formatAnalyzerLabel(
       case 'NVD':
         analyzerUrl = 'https://nvd.nist.gov/vuln/detail/' + vulnId;
         break;
+      case 'OSV':
+        analyzerUrl = 'https://osv.dev/vulnerability/' + vulnId;
+        break;
     }
   }
 
@@ -496,6 +499,22 @@ $common.formatTimestamp = function formatTimestamp(timestamp, includeTime) {
   }
 };
 
+/**
+ * Formats a millisecond delta as a localized "just now" / "Xs ago" / "Xm ago" / "Xh ago" / "Xd ago" string.
+ * Pass the i18n `$t` function bound to the calling component.
+ */
+$common.formatRelative = function formatRelative(diffMs, $t) {
+  const diff = Math.max(0, Math.floor(diffMs / 1000));
+  if (diff < 10) return $t('message.relative_just_now');
+  if (diff < 60) return $t('message.relative_seconds_ago', { n: diff });
+  const m = Math.floor(diff / 60);
+  if (m < 60) return $t('message.relative_minutes_ago', { n: m });
+  const h = Math.floor(m / 60);
+  if (h < 24) return $t('message.relative_hours_ago', { n: h });
+  const d = Math.floor(h / 24);
+  return $t('message.relative_days_ago', { n: d });
+};
+
 /*
  * Concatenates the group, name, and version of a component.
  */
@@ -597,11 +616,36 @@ $common.setQueryParams = function (url, params) {
   const isRelative = url.startsWith('/');
   const parsed = isRelative ? new URL(url, 'http://localhost') : new URL(url);
   for (const [key, value] of Object.entries(params)) {
-    parsed.searchParams.set(key, value);
+    if (Array.isArray(value)) {
+      parsed.searchParams.delete(key);
+      for (const v of value) {
+        if (v !== undefined && v !== null) {
+          parsed.searchParams.append(key, v);
+        }
+      }
+    } else if (value !== undefined && value !== null) {
+      parsed.searchParams.set(key, value);
+    }
   }
   return isRelative
     ? parsed.pathname + parsed.search + parsed.hash
     : parsed.href;
+};
+
+$common.sameQueryParams = function (a, b) {
+  const canonicalize = (params) => {
+    const pairs = [];
+    for (const [key, value] of Object.entries(params || {})) {
+      const values = Array.isArray(value) ? value : [value];
+      for (const v of values) {
+        if (v !== undefined && v !== null) {
+          pairs.push([key, String(v)]);
+        }
+      }
+    }
+    return JSON.stringify(pairs.sort());
+  };
+  return canonicalize(a) === canonicalize(b);
 };
 
 $common.getCollectionLogicText = function (i18n, project) {
@@ -672,6 +716,7 @@ export default {
   componentClassifierLabelProjectUrlFormatter:
     $common.componentClassifierLabelProjectUrlFormatter,
   formatTimestamp: $common.formatTimestamp,
+  formatRelative: $common.formatRelative,
   concatenateComponentName: $common.concatenateComponentName,
   valueWithDefault: $common.valueWithDefault,
   calcProgressPercent: $common.calcProgressPercent,
@@ -679,6 +724,7 @@ export default {
   toBoolean: $common.toBoolean,
   trimToNull: $common.trimToNull,
   setQueryParams: $common.setQueryParams,
+  sameQueryParams: $common.sameQueryParams,
   OWASP_RR_LIKELIHOOD_TO_IMPACT_SEVERITY_MATRIX:
     $common.OWASP_RR_LIKELIHOOD_TO_IMPACT_SEVERITY_MATRIX,
   getCollectionLogicText: $common.getCollectionLogicText,

@@ -45,7 +45,7 @@
       @on-post-body="onPostBody"
     >
     </bootstrap-table>
-    <project-create-project-modal v-on:refreshTable="refreshTable" />
+    <project-create-project-modal />
   </div>
 </template>
 
@@ -276,7 +276,7 @@ export default {
               this.routerFunc().resolve({
                 name: 'Project',
                 params: { uuid: row.uuid },
-              }).href,
+              }).route.fullPath,
             );
             let collectionIcon = '';
             if (row.collectionLogic) {
